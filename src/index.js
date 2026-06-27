@@ -21,7 +21,9 @@ app.use(
 
 app.use(
   cors({
-    origin: 'https://krossava.com.ua',
+    origin: ['https://krossava.com.ua', 'https://www.krossava.com.ua'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
   }),
 );
 
