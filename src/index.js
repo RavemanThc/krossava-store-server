@@ -19,7 +19,11 @@ app.use(
   }),
 );
 
-app.use(cors());
+app.use(
+  cors({
+    origin: 'https://krossava.com.ua',
+  }),
+);
 
 app.use(sneackerRouters);
 app.use(orderTelegram);
