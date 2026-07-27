@@ -9,7 +9,8 @@
     "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "import": "node scripts/importProducts.js",
-    "algolia": "node scripts/importToAlgolia.js"
+    "algolia": "node scripts/importToAlgolia.js",
+    "sync": "npm run import && npm run algolia"
   },
   "keywords": [],
   "author": "",
