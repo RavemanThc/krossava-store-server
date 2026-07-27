@@ -89,7 +89,7 @@ export const getSneackerById = async (req, res) => {
   const { id } = req.params;
   const sneacker = await Sneacker.findById(id);
   if (!sneacker) {
-    createHttpError(404, 'Sneacker not found');
+    throw createHttpError(404, 'Sneacker not found');
   }
   res.status(200).json(sneacker);
 };
