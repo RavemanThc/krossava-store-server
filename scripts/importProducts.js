@@ -36,6 +36,8 @@ items.forEach((item) => {
       description: item.description[0],
       barcode: item.barcode?.[0] ?? null,
       sizes: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
   }
 
@@ -48,18 +50,12 @@ items.forEach((item) => {
   });
 });
 
-await Sneacker.bulkWrite(
-  Object.values(grouped).map((product) => ({
-    updateOne: {
-      filter: { groupId: product.groupId },
-      update: {
-        $set: product,
-        $setOnInsert: { createdAt: new Date() },
-        lastSyncAt: new Date(),
-      },
-      upsert: true,
-    },
-  })),
-);
+console.log('🗑 Очищаем коллекцию...');
+await Sneacker.deleteMany({});
 
-console.log(`Импортировано ${Object.keys(grouped).length} товаров`);
+console.log('📦 Импортируем товары...');
+await Sneacker.insertMany(Object.values(grouped));
+
+console.log(`✅ Импортировано ${Object.keys(grouped).length} товаров`);
+
+await mongoose.disconnect();
