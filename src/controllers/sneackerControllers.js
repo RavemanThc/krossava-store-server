@@ -87,14 +87,11 @@ export const getSneackers = async (req, res) => {
 //
 export const getSneackerById = async (req, res) => {
   const { id } = req.params;
-
   const sneacker = await Sneacker.findById(id);
-
   if (!sneacker) {
     throw createHttpError(404, 'Sneacker not found');
   }
-
-  res.status(200).json(mapProductToDTO(sneacker));
+  res.status(200).json(sneacker);
 };
 //
 //
@@ -111,7 +108,7 @@ export const getCategories = async (req, res) => {
 export const createNewSneacker = async (req, res) => {
   const sneacker = await Sneacker.create(req.body);
 
-  res.status(201).json(mapProductToDTO(sneacker));
+  res.status(200).json(sneacker);
 };
 //
 //
@@ -122,7 +119,7 @@ export const deleateSneackerItem = async (req, res) => {
   if (!sneacker) {
     throw createHttpError(404, 'Sneaker not found');
   }
-  res.status(200).json(mapProductToDTO(sneacker));
+  res.status(200).json(sneacker);
 };
 //
 //
@@ -135,5 +132,5 @@ export const pathSneackerItem = async (req, res) => {
   if (!sneacker) {
     throw createHttpError(404, 'Sneacker not found');
   }
-  res.status(200).json(mapProductToDTO(sneacker));
+  res.status(200).json(sneacker);
 };
