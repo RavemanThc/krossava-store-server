@@ -19,7 +19,7 @@ const router = Router();
 
 router.get('/sneackers', getSneackers);
 router.get('/categories', getCategories);
-router.get('/history', getHistorySneackers);
+router.get('/sneackers/history', getHistorySneackers);
 router.get(
   '/sneackers/:id',
   celebrate(sneackersIdParamSchema),
