@@ -20,7 +20,7 @@ async function run() {
     }
 
     const objects = sneakers.map((doc) => ({
-      objectID: doc.groupId, // лучше использовать groupId
+      objectID: doc._id.toString(),
       groupId: doc.groupId,
       name: doc.name,
       category: doc.category,
