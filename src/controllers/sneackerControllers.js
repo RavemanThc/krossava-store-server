@@ -147,7 +147,7 @@ export const getHistorySneackers = async (req, res) => {
     return res.json([]);
   }
 
-  const idsArray = ids.split(',');
+  const idsArray = ids.split(',').filter(Boolean);
 
   const sneakers = await Sneacker.find({
     _id: { $in: idsArray },
