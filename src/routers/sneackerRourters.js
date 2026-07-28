@@ -6,6 +6,7 @@ import {
   deleateSneackerItem,
   pathSneackerItem,
   getCategories,
+  getHistorySneackers,
 } from '../controllers/sneackerControllers.js';
 import { celebrate } from 'celebrate';
 import {
@@ -18,7 +19,7 @@ const router = Router();
 
 router.get('/sneackers', getSneackers);
 router.get('/categories', getCategories);
-
+router.get('/history', getHistorySneackers);
 router.get(
   '/sneackers/:id',
   celebrate(sneackersIdParamSchema),

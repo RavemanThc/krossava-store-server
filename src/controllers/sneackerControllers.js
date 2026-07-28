@@ -137,3 +137,21 @@ export const pathSneackerItem = async (req, res) => {
   }
   res.status(200).json(mapProductToDTO(sneacker));
 };
+//
+//
+//
+export const getHistorySneackers = async (req, res) => {
+  const { ids } = req.query;
+
+  if (!ids) {
+    return res.json([]);
+  }
+
+  const idsArray = ids.split(',');
+
+  const sneakers = await Sneacker.find({
+    _id: { $in: idsArray },
+  });
+
+  res.json(sneakers.map(mapProductToDTO));
+};
