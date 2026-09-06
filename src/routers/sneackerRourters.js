@@ -14,7 +14,11 @@ import {
   sneackersIdParamSchema,
   updateSneackersSchema,
 } from '../validations/studentsValidation.js';
-import { searchProductsForAI } from '../controllers/chatBotAiControllers.js';
+import {
+  searchProductsForAI,
+  sendChatMessage,
+} from '../controllers/chatBotAiControllers.js';
+import { chatRateLimit } from '../middlewares/chatRateLimit.js';
 
 const router = Router();
 
@@ -38,4 +42,6 @@ router.post(
   pathSneackerItem,
 );
 router.get('/ai/products', searchProductsForAI);
+router.post('/chat', chatRateLimit, sendChatMessage);
+
 export default router;
