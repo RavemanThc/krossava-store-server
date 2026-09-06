@@ -23,7 +23,7 @@ export const searchProductsForAI = async (req, res) => {
     filterArray.push(`sizes:"${size}"`);
   } else if (gender === 'women') {
     filterArray.push(
-      '(sizes:"36" OR sizes:"37" OR sizes:"38" OR sizes:"39" OR sizes:"40")',
+      '(sizes:"36" OR sizes.size:"37" OR sizes.size:"38" OR sizes.size:"39" OR sizes.size:"40")',
     );
   }
 
