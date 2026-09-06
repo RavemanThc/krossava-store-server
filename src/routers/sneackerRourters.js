@@ -14,6 +14,7 @@ import {
   sneackersIdParamSchema,
   updateSneackersSchema,
 } from '../validations/studentsValidation.js';
+import { searchProductsForAI } from '../controllers/chatBotAiControllers.js';
 
 const router = Router();
 
@@ -36,5 +37,5 @@ router.post(
   celebrate(updateSneackersSchema),
   pathSneackerItem,
 );
-
+router.get('/ai/products', searchProductsForAI);
 export default router;
