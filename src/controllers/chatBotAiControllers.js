@@ -11,6 +11,7 @@ export const searchProductsForAI = async (req, res) => {
     minPrice,
     maxPrice,
     limit = 6,
+    page = 1,
     sortOrder,
   } = req.query;
 
@@ -35,10 +36,12 @@ export const searchProductsForAI = async (req, res) => {
     filterArray.push(`price:${min} TO ${max}`);
   }
 
+  const currentPage = Math.max(Number(page) || 1, 1);
+
   const searchOptions = {
     indexName: INDEX_NAME,
     query: String(query),
-    page: 0,
+    page: currentPage - 1,
     hitsPerPage: Math.min(Math.max(Number(limit) || 6, 1), 10),
   };
 
@@ -65,6 +68,8 @@ export const searchProductsForAI = async (req, res) => {
   return res.status(200).json({
     total: result.nbHits,
     count: products.length,
+    page: currentPage,
+    totalPages: result.nbPages,
     products,
   });
 };
