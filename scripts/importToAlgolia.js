@@ -1,3 +1,4 @@
+import { mapProductToAlgolia } from '../src/mappers/algoliaMapper.js';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { Sneacker } from '../src/models/sneacker.js';
@@ -23,17 +24,7 @@ async function run() {
     }
 
     // 3. Маппим данные под структуру, которую мы заложили в хуках
-    const objectsToSync = sneakers.map((doc) => ({
-      objectID: doc._id.toString(), // Algolia требует string-ключ objectID
-      groupId: doc.groupId,
-      name: doc.name,
-      category: doc.category,
-      price: doc.price,
-      image: doc.image,
-      description: doc.description,
-      barcode: doc.barcode,
-      sizes: doc.sizes ? doc.sizes.map((s) => s.size) : [],
-    }));
+    const objectsToSync = sneakers.map(mapProductToAlgolia);
 
     // 4. Отправляем всю пачку в Algolia v5
     console.log(`Отправляем данные в индекс "${INDEX_NAME}"...`);

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { algoliaClient, INDEX_NAME } from '../src/config/algolia.js';
+import { mapProductToAlgolia } from '../src/mappers/algoliaMapper.js';
 import mongoose from 'mongoose';
 import { parseStringPromise } from 'xml2js';
 import { Sneacker } from '../src/models/sneacker.js';
@@ -55,7 +57,6 @@ await Sneacker.bulkWrite(
       update: {
         $set: product,
         $setOnInsert: { createdAt: new Date() },
-        lastSyncAt: new Date(),
       },
       upsert: true,
     },
@@ -63,3 +64,10 @@ await Sneacker.bulkWrite(
 );
 
 console.log(`Импортировано ${Object.keys(grouped).length} товаров`);
+
+const imported = await Sneacker.find({ groupId: { $in: Object.keys(grouped) } });
+try {
+  await algoliaClient.saveObjects({ indexName: INDEX_NAME, objects: imported.map(mapProductToAlgolia) });
+} finally {
+  await mongoose.disconnect();
+}

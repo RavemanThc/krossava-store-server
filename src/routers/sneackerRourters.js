@@ -1,3 +1,5 @@
+import { requireAdmin } from '../middlewares/requireAdmin.js';
+import { getHistory, getSitemapProducts, chat } from '../controllers/catalogExtras.js';
 import { Router } from 'express';
 import {
   getSneackers,
@@ -10,13 +12,17 @@ import {
 import { celebrate } from 'celebrate';
 import {
   getSneackersSchema,
+  createSneackersSchema,
   sneackersIdParamSchema,
   updateSneackersSchema,
 } from '../validations/studentsValidation.js';
 
 const router = Router();
 
-router.get('/sneackers', getSneackers);
+router.get('/sneackers', celebrate(getSneackersSchema), getSneackers);
+router.get('/sneackers/history', getHistory);
+router.get('/sitemap-products', getSitemapProducts);
+router.post('/chat', chat);
 router.get('/categories', getCategories);
 
 router.get(
@@ -24,14 +30,16 @@ router.get(
   celebrate(sneackersIdParamSchema),
   getSneackerById,
 );
-router.post('/sneackers', celebrate(getSneackersSchema), createNewSneacker);
-router.post(
-  'sneackers/:id',
+router.post('/sneackers', requireAdmin, celebrate(createSneackersSchema), createNewSneacker);
+router.delete(
+  '/sneackers/:id',
+  requireAdmin,
   celebrate(sneackersIdParamSchema),
   deleateSneackerItem,
 );
-router.post(
-  'sneackers/:id',
+router.patch(
+  '/sneackers/:id',
+  requireAdmin,
   celebrate(updateSneackersSchema),
   pathSneackerItem,
 );
