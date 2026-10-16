@@ -9,6 +9,17 @@ const productSchema = new Schema(
     category: String,
     price: Number,
     image: String,
+    // Easydrop owns image and stock; Telegram only adds gallery photos.
+    telegramPhotos: [{
+      _id: false,
+      url: String,
+      publicId: String,
+      sha256: String,
+      sourceChatId: String,
+      sourceMessageId: String,
+      sourceThreadId: String,
+    }],
+    lastSyncAt: Date,
     description: String,
     barcode: String,
     sizes: [

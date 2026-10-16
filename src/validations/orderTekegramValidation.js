@@ -1,24 +1,30 @@
 import { Joi, Segments } from 'celebrate';
 
+const customer = {
+  firstname: Joi.string().trim().min(2).max(30).required(),
+  lastname: Joi.string().trim().min(2).max(30).required(),
+  socialMedia: Joi.string().trim().min(2).max(50).required(),
+};
+
 export const orderSchema = {
-  [Segments.BODY]: Joi.object({
-    firstname: Joi.string().trim().min(2).max(30).required().messages({
-      'string.empty': "Ім'я не може бути пустим",
-      'string.min': "Ім'я має містити мінімум {#limit} символи",
-      'any.required': "Ім'я є обов'язковим полем",
+  [Segments.BODY]: Joi.alternatives().try(
+    Joi.object({
+      customer: Joi.object(customer).required(),
+      items: Joi.array().min(1).max(50).items(Joi.object({
+        name: Joi.string().trim().max(200).required(),
+        barcode: Joi.string().trim().max(100).required(),
+        size: Joi.string().trim().max(20).required(),
+        quantity: Joi.number().integer().min(1).max(99).required(),
+        price: Joi.number().min(0).max(1000000).precision(2).required(),
+      })).required(),
     }),
-    lastname: Joi.string().trim().min(2).max(30).required().messages({
-      'string.empty': 'Прізвище не може бути пустим',
-      'string.min': 'Прізвище має містити мінімум {#limit} символи',
-      'any.required': "Прізвище є обов'язковим полем",
+    // Older product pages submit a single item without a cart.
+    Joi.object({
+      ...customer,
+      productTitle: Joi.string().trim().max(200).required(),
+      productSize: Joi.string().trim().max(20).required(),
+      productBarcode: Joi.string().trim().max(100).required(),
+      productImage: Joi.string().max(2048).allow('', null),
     }),
-    socialMedia: Joi.string().trim().min(3).required().messages({
-      'string.empty': 'Контактні дані не можуть бути пустими',
-      'any.required': "Контактні дані є обов'язковими",
-    }),
-    productTitle: Joi.string().required(),
-    productSize: Joi.string().required(),
-    productBarcode: Joi.string().required(),
-    productImage: Joi.string().allow('', null),
-  }),
+  ).required(),
 };

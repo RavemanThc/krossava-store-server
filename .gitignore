@@ -141,3 +141,16 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local Telegram exports and import reports
+telegram-import-report.json
+telegram-exports/
+
+telegram-public-report.json
+
+# Telegram account session and comment photos
+.telegram/
+telegram-upload-report.json
+
+# Daily sync summaries
+sync-reports/

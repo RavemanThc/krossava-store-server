@@ -21,11 +21,11 @@ export const mapProductToDTO = (product) => {
     title: product.name || product.title, // На случай, если в Algolia поле называется title
     category: product.category,
     price: product.price,
-    images: product.image
-      ? [product.image]
-      : Array.isArray(product.images)
-        ? product.images
-        : [], // подстраховка для массивов картинок
+    images: [...new Set([
+      product.image,
+      ...(product.images || []),
+      ...(product.telegramPhotos || []).map(photo => photo.url),
+    ].filter(Boolean))],
     description: product.description,
     sizes: mappedSizes,
     updatedAt: product.lastSyncAt || product.updatedAt,

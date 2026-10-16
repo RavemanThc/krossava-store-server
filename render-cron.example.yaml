@@ -1,0 +1,18 @@
+# Legacy dry-run template. Use .github/workflows/daily-catalog.yml for production.
+# Create/configure this job in Render; this file does not schedule local runs.
+services:
+  - type: cron
+    name: krossava-easydrop-daily
+    runtime: node
+    schedule: "0 3 * * *"
+    buildCommand: npm ci
+    startCommand: npm run sync:catalog
+    envVars:
+      - key: EASYDROP_FEED_URL
+        sync: false
+      - key: MONGODB_URL
+        sync: false
+      - key: ALGOLIA_APP_ID
+        sync: false
+      - key: ALGOLIA_ADMIN_KEY
+        sync: false
