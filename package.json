@@ -14,7 +14,10 @@
     "telegram:login": "node scripts/telegramLogin.js",
     "telegram:collect": "node scripts/collectTelegramComments.js",
     "telegram:login:qr": "node scripts/telegramQrLogin.js",
-    "sync:daily": "node scripts/syncDaily.js"
+    "sync:daily": "node scripts/syncDaily.js",
+    "configure:filters": "node scripts/configureCatalogFilters.js",
+    "migrate:photos:r2": "node scripts/migratePhotosToR2.js",
+    "sync:typesense": "node scripts/syncTypesense.js"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +29,7 @@
     "nodemon": "^3.1.14"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
     "algoliasearch": "^5.54.0",
     "axios": "^1.17.0",
     "celebrate": "^15.0.3",

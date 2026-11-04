@@ -1,3 +1,7 @@
+import { searchWithFallback } from '../services/search/failover.js';
+import { typesenseCatalog } from '../services/catalog/typesense.js';
+import { typesenseEnabled } from '../services/search/typesense.js';
+import { mongoCatalog } from '../services/catalog/fallback.js';
 import createHttpError from 'http-errors';
 import { Sneacker } from '../models/sneacker.js';
 import { mapProductToDTO } from '../mappers/productMapper.js';
@@ -33,10 +37,18 @@ export const chat = async (req, res) => {
   if (typeof message !== 'string' || !message.trim() || message.length > 500) {
     throw createHttpError(400, 'Введіть назву або артикул товару (до 500 символів).');
   }
-  const result = await algoliaClient.search({ requests: [{
-    indexName: INDEX_NAME, query: message.trim(), hitsPerPage: 5,
-  }] });
-  const products = (result.results[0].hits || []).map(mapProductToDTO).map(p => ({
+  const query = { search: message.trim(), perPage: 5 };
+  const hits = await searchWithFallback(async () => {
+    const result = await algoliaClient.search({ requests: [{
+      indexName: INDEX_NAME, query: message.trim(), hitsPerPage: 5,
+    }] });
+    return (result.results[0].hits || []).map(mapProductToDTO);
+  }, typesenseEnabled() ? async () => (await typesenseCatalog(query)).products : null, async () => {
+    const products = await Sneacker.find({'sizes.quantity': {$gt: 0}})
+      .select('name category price image barcode sizes createdAt').maxTimeMS(10000).lean();
+    return mongoCatalog(products, query).products;
+  });
+  const products = hits.map(p => ({
     id: p.id, name: p.name, price: p.price, image: p.image,
     sizeText: p.sizes.map(s => s.size).join(', '), url: `/sneakers/${p.id}`,
   }));

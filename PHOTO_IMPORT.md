@@ -29,8 +29,8 @@ npm run import:photos -- --export "/path/discussion/result.json"
 npm run import:photos -- --export "/path/discussion/result.json" --apply
 ```
 
-Первый запуск проверяет сопоставление и наличие файлов, второй загружает их в Cloudinary и сохраняет ссылки в MongoDB.
-Отчёт: telegram-import-report.json. Настройки берутся из серверного .env: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, MONGODB_URL.
+Первый запуск проверяет сопоставление и наличие файлов, второй загружает их в Cloudflare R2 и сохраняет ссылки в MongoDB.
+Отчёт: telegram-import-report.json. Настройки берутся из серверного .env: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_R2_BUCKET_NAME, CLOUDFLARE_R2_ACCESS_KEY_ID, CLOUDFLARE_R2_SECRET_ACCESS_KEY, CLOUDFLARE_R2_PUBLIC_URL, MONGODB_URL.
 
 Прямой импорт фотографий постов (`importTelegramPublic.js` и `uploadTelegramManifest.js`) отключён, чтобы не повторить ошибочную загрузку.
 
@@ -66,3 +66,6 @@ npm run import:photos -- --export .telegram/comments-export/result.json --apply
 Загрузка выполняется одновременно для шести товаров, внутри каждой галереи порядок сохраняется. Уже привязанные файлы повторно не загружаются.
 
 Вход по QR без ввода номера: `npm run telegram:login:qr`, затем http://127.0.0.1:3106. QR обновляется автоматически; пароль двухэтапной проверки при необходимости вводится только на локальной странице.
+
+
+See [R2 migration and release checklist](R2_MIGRATION.md) for copying existing Cloudinary photos, enabling the delivery domain and retaining legacy cleanup credentials during the transition.

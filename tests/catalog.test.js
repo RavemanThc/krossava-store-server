@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Sneacker } from '../src/models/sneacker.js';
 import { mapProductToDTO } from '../src/mappers/productMapper.js';
 import { mapProductToAlgolia } from '../src/mappers/algoliaMapper.js';
-import { getSneackerById } from '../src/controllers/sneackerControllers.js';
+import { getSneackerById, getSneackers } from '../src/controllers/sneackerControllers.js';
 import { getHistory, getSitemapProducts, chat } from '../src/controllers/catalogExtras.js';
 import { requireAdmin } from '../src/middlewares/requireAdmin.js';
 import { algoliaClient } from '../src/config/algolia.js';
@@ -90,4 +90,35 @@ test('HTTP routes validate requests without touching external services', async t
       assert.ok([401,503].includes((await fetch(base+url,{method})).status));
     }
   } finally { await new Promise(resolve=>server.close(resolve)); }
+});
+
+
+test('catalog endpoint returns contextual facets with the existing product contract', async t => {
+  let sent;
+  t.mock.method(algoliaClient,'search',async input=>{
+    sent=input.requests;
+    return {results:[
+      {page:0,hitsPerPage:10,nbHits:1,nbPages:1,hits:[mapProductToAlgolia(product)]},
+      {facets:{brand:{Nike:1}}},{facets:{model:{'Air Max 90':1}}},{facets:{sizes:{43:1}}},
+    ]};
+  });
+  const res=response();
+  await getSneackers({query:{category:'Nike'}},res);
+  assert.equal(sent.length,4);
+  assert.equal(res.body.filters.categoryBrand,'Nike');
+  assert.deepEqual(res.body.filters.models,[{value:'Air Max 90',count:1}]);
+  assert.equal(res.body.products[0].id,id);
+  assert.equal(res.body.totalItems,1);
+  assert.equal(getSneackersSchema.query.validate({brand:'New Balance',model:'9060'}).error,undefined);
+});
+
+test('catalog remains available from MongoDB when Algolia rejects requests', async t => {
+  t.mock.method(globalThis,'fetch',async()=>{throw new Error('reserve unavailable');});
+  t.mock.method(algoliaClient,'search',async()=>{throw new Error('search unavailable');});
+  t.mock.method(Sneacker,'find',()=>({select:()=>({maxTimeMS:()=>({lean:async()=>[product]})})}));
+  const res=response();
+  await getSneackers({query:{}},res);
+  assert.equal(res.body.totalItems,1);
+  assert.equal(res.body.products[0].id,id);
+  assert.deepEqual(res.body.filters.sizes,[{value:'43',count:1}]);
 });

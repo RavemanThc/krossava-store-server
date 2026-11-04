@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { r2Variables, r2Config } from '../src/services/import/r2.js';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
@@ -13,9 +14,10 @@ async function run(script,args=[]){
 let directory;
 try{
   // Validate all configuration before any catalogue changes.
-  for(const name of ['EASYDROP_FEED_URL','MONGODB_URL','ALGOLIA_APP_ID','ALGOLIA_ADMIN_KEY','CLOUDINARY_CLOUD_NAME','CLOUDINARY_API_KEY','CLOUDINARY_API_SECRET','TELEGRAM_API_ID','TELEGRAM_API_HASH']){
+  for(const name of ['EASYDROP_FEED_URL','MONGODB_URL','ALGOLIA_APP_ID','ALGOLIA_ADMIN_KEY',...r2Variables,'TELEGRAM_API_ID','TELEGRAM_API_HASH']){
     if(!process.env[name])throw new Error(`Missing ${name}`);
   }
+  r2Config();
   if(values.apply && !process.env.TELEGRAM_SESSION){
     try{await readFile('.telegram/session.txt');}catch{throw new Error('Missing TELEGRAM_SESSION');}
   }

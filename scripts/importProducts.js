@@ -2,15 +2,14 @@ import 'dotenv/config';
 import { parseArgs } from 'node:util';
 import { mkdir, writeFile } from 'node:fs/promises';
 import mongoose from 'mongoose';
-import { algoliaClient, INDEX_NAME } from '../src/config/algolia.js';
-import { mapProductToAlgolia } from '../src/mappers/algoliaMapper.js';
+import { syncSearchProducts } from '../src/services/search/sync.js';
 import { Sneacker } from '../src/models/sneacker.js';
 import { parseEasydrop, stockUpdateOperations } from '../src/services/import/easydrop.js';
 import { planCatalogSync, cleanupEntry, cleanupAssets } from '../src/services/import/catalogSync.js';
 import { productArticle } from '../src/services/import/article.js';
-import { configureCloudinary } from '../src/services/import/cloudinary.js';
+import { configurePhotoStorage } from '../src/services/import/photoStorage.js';
 const { values } = parseArgs({options:{apply:{type:'boolean',default:false}}});
-const report = { dryRun: !values.apply, stage:'fetch', deletedPhotos:0 };
+const report = { dryRun: !values.apply, stage:'fetch', deletedPhotos:0, cleanupPending:0 };
 try {
   if (!process.env.EASYDROP_FEED_URL) throw new Error('Missing feed configuration.');
   const response = await fetch(process.env.EASYDROP_FEED_URL, { signal: AbortSignal.timeout(60000) });
@@ -22,7 +21,8 @@ try {
   const plan = planCatalogSync(incoming, existing);
   Object.assign(report,{feedProducts:incoming.length,activeProducts:plan.active.length,newProducts:plan.newProducts,removedProducts:plan.removed.length});
   if(values.apply){
-    const cloud = configureCloudinary();
+    const storage = configurePhotoStorage();
+    await storage.check();
     const queue = mongoose.connection.collection('catalog_asset_cleanup');
     report.stage='update-products';
     if(plan.active.length) await Sneacker.bulkWrite(stockUpdateOperations(plan.active));
@@ -31,29 +31,27 @@ try {
       const entry=cleanupEntry(product);
       await queue.updateOne({_id:entry._id},{$set:{article:entry.article},$addToSet:{publicIds:{$each:entry.publicIds}}},{upsert:true});
     }
-    report.stage='remove-search-records';
-    if(plan.removed.length){
-      await algoliaClient.deleteObjects({indexName:INDEX_NAME,objectIDs:plan.removed.map(p=>String(p._id)),waitForTasks:true});
-      await Sneacker.deleteMany({_id:{$in:plan.removed.map(p=>p._id)}});
-    }
     report.stage='update-search';
-    const all=await Sneacker.find({}).lean();
-    if(all.length) await algoliaClient.saveObjects({indexName:INDEX_NAME,objects:all.map(mapProductToAlgolia),waitForTasks:true});
+    const removedIds = plan.removed.map(p => String(p._id));
+    const removed = new Set(removedIds);
+    const all = (await Sneacker.find({}).lean()).filter(p => !removed.has(String(p._id)));
+    await syncSearchProducts(all, removedIds);
+    if (removedIds.length) await Sneacker.deleteMany({_id:{$in:removedIds}});
     report.stage='cleanup-photos';
     for await(const entry of queue.find({})){
-      report.deletedPhotos+=await cleanupAssets(entry,{
+      try { report.deletedPhotos+=await cleanupAssets(entry,{
         isActive: async e => all.some(p=>p.groupId===e._id || (e.article && productArticle(p.barcode)===e.article)),
-        listAssets: async prefix => {
-          const ids=[];let cursor;
-          do {const page=await cloud.api.resources({type:'upload',resource_type:'image',prefix,max_results:500,...(cursor?{next_cursor:cursor}:{})});ids.push(...page.resources.map(p=>p.public_id));cursor=page.next_cursor;}while(cursor);
-          return ids;
-        },
+        listAssets: (prefix, ids) => storage.listAssets(prefix, ids),
         isReferenced: async id => Boolean(await Sneacker.exists({'telegramPhotos.publicId':id})),
-        destroy: id => cloud.uploader.destroy(id,{resource_type:'image',invalidate:true}),
+        destroy: id => storage.destroy(id),
         complete: id => queue.deleteOne({_id:id}),
-      });
+      }); } catch {
+        // Keep failed cleanup durable; a legacy provider outage must not block new R2 galleries.
+        report.cleanupPending++;
+      }
     }
   }
+  if(report.cleanupPending) console.warn(`Photo cleanup deferred for ${report.cleanupPending} queue entries; retry after restoring storage access.`);
   report.stage='complete';
 } catch {
   report.failed=true;process.exitCode=1;

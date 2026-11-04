@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 import { Sneacker } from '../src/models/sneacker.js';
 import { indexProducts } from '../src/services/import/article.js';
 import { readTelegramExport, planTelegramPhotos, safePhotoPath } from '../src/services/import/telegramExport.js';
-import { configureCloudinary, uploadPhoto } from '../src/services/import/cloudinary.js';
+import { createR2Storage } from '../src/services/import/r2.js';
 
 const { values } = parseArgs({ options: {
   export: { type: 'string', multiple: true },
@@ -24,7 +24,8 @@ try {
   report.issues.push(...plan.issues);
   const groups = new Map();
   for (const photo of plan.photos) groups.set(photo.productId, [...(groups.get(photo.productId) || []), photo]);
-  if (values.apply) configureCloudinary();
+  const storage = values.apply ? createR2Storage() : null;
+  if (storage) await storage.check();
   const pending = groups.entries();
   let stopped = false;
   let completed = 0;
@@ -40,14 +41,14 @@ try {
         if (gallery.some(p => p.sha256 === sha256)) { report.alreadyLinked++; continue; }
         let asset = known.get(sha256);
         if (asset) report.alreadyLinked++;
-        else if (values.apply) { asset = await uploadPhoto(file, photo.article, sha256); report.uploaded++; }
+        else if (values.apply) { asset = await storage.uploadPhoto(file, photo.article, sha256); report.uploaded++; }
         gallery.push({ url: asset?.url, publicId: asset?.publicId, sha256,
           sourceChatId: photo.chatId, sourceMessageId: photo.messageId, sourceThreadId: photo.threadId });
       } catch (error) {
         valid = false;
         report.issues.push({ article: photo.article, chatId: photo.chatId, messageId: photo.messageId,
-          reason: error.http_code ? `cloudinary-http-${error.http_code}` : 'photo-read-or-upload-failed' });
-        if ([401, 403, 420, 429].includes(error.http_code)) throw new Error('Cloudinary rejected access or reached a limit.');
+          reason: error.http_code ? `storage-http-${error.http_code}` : 'photo-read-or-upload-failed' });
+        if ([401, 403, 420, 429].includes(error.http_code)) throw new Error('Photo storage rejected access or reached a limit.');
       }
     }
     // Replace only when the whole selection succeeds; reruns never append beyond ten.

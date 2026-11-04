@@ -1,6 +1,5 @@
-import { mapProductToAlgolia } from '../mappers/algoliaMapper.js';
+import { syncSearchProducts } from '../services/search/sync.js';
 import { model, Schema } from 'mongoose';
-import { algoliaClient, INDEX_NAME } from '../config/algolia.js';
 
 const productSchema = new Schema(
   {
@@ -45,12 +44,12 @@ productSchema.index({ groupId: 1 }, { unique: true });
 productSchema.index({ createdAt: -1 });
 
 const syncProduct = async (doc) => {
-  if (doc) await algoliaClient.saveObjects({ indexName: INDEX_NAME, objects: [mapProductToAlgolia(doc)] });
+  if (doc) await syncSearchProducts([doc]);
 };
 productSchema.post('save', syncProduct);
 productSchema.post('findOneAndUpdate', syncProduct);
 productSchema.post('findOneAndDelete', async function (doc) {
-  if (doc) await algoliaClient.deleteObjects({ indexName: INDEX_NAME, objectIDs: [String(doc._id)] });
+  if (doc) await syncSearchProducts([], [String(doc._id)]);
 });
 
 export const Sneacker = model('Product', productSchema);

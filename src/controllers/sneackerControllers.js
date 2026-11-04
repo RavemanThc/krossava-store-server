@@ -1,3 +1,8 @@
+import { typesenseCatalog } from '../services/catalog/typesense.js';
+import { typesenseEnabled } from '../services/search/typesense.js';
+import { searchWithFallback } from '../services/search/failover.js';
+import { mongoCatalog } from '../services/catalog/fallback.js';
+import { catalogueRequests, facetOptions } from '../services/catalog/filters.js';
 import createHttpError from 'http-errors';
 import { mapProductToDTO } from '../mappers/productMapper.js';
 import { Sneacker } from '../models/sneacker.js';
@@ -5,86 +10,28 @@ import { Sneacker } from '../models/sneacker.js';
 import { algoliaClient, INDEX_NAME } from '../config/algolia.js';
 
 export const getSneackers = async (req, res) => {
-  const {
-    page = 1,
-    perPage = 10,
-    category,
-    search = '', // по умолчанию пустая строка
-    minPrice,
-    maxPrice,
-    size,
-    sortBy = '_id',
-    sortOrder = 'asc',
-  } = req.query;
-
-  try {
-    const pageNum = Math.max(1, parseInt(page, 10) || 1) - 1; // Algolia пагинация с 0
-    const perPageNum = Math.min(50, Math.max(1, parseInt(perPage, 10) || 10));
-
-    // 1. Динамически собираем фильтры
-    const filterArray = [];
-    if (category) filterArray.push(`category:${JSON.stringify(category)}`);
-    if (size) {
-      filterArray.push(`sizes:${JSON.stringify(size)}`);
-    }
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      const min = minPrice || 0;
-      const max = maxPrice ?? 999999;
-      filterArray.push(`price:${min} TO ${max}`);
-    }
-    // 2. Базовый объект настроек для Algolia
-    const searchOptions = {
-      indexName: INDEX_NAME,
-      query: String(search), // гарантируем, что это строка, даже если пришел пустой запрос
-      page: pageNum,
-      hitsPerPage: perPageNum,
+  const indexName = req.query.sortBy === 'price'
+    ? (req.query.sortOrder === 'desc' ? 'sneakers_index_price_desc' : 'sneakers_index_price_asc') : INDEX_NAME;
+  const { requests, fixedBrand, brand } = catalogueRequests(req.query, indexName);
+  return res.json(await searchWithFallback(async () => {
+    const response = await algoliaClient.search({ requests });
+    const [result, brands, models, sizes] = response.results;
+    return {
+      page: result.page + 1, perPage: result.hitsPerPage,
+      totalItems: result.nbHits, totalPages: result.nbPages,
+      products: (result.hits || []).map(mapProductToDTO),
+      filters: { categoryBrand: fixedBrand, brand,
+        brands: facetOptions(brands?.facets?.brand),
+        models: facetOptions(models?.facets?.model),
+        sizes: facetOptions(sizes?.facets?.sizes),
+      },
     };
-
-    // Добавляем фильтры в настройки ТОЛЬКО если они реально есть
-    if (filterArray.length > 0) {
-      searchOptions.filters = filterArray.join(' AND ');
-    }
-
-    // 3. Обработка индекса сортировки
-    // Если сортировка по цене — переключаемся на индекс-реплику (если они настроены в Algolia)
-    if (sortBy === 'price') {
-      searchOptions.indexName =
-        sortOrder === 'desc'
-          ? 'sneakers_index_price_desc'
-          : 'sneakers_index_price_asc';
-    }
-
-    // 4. Отправляем запрос в Algolia v5
-    const searchResponse = await algoliaClient.search({
-      requests: [searchOptions],
-    });
-
-    const result = searchResponse.results[0];
-    console.log('category:', category);
-    console.log('filters:', `category:${JSON.stringify(category)}`);
-    // 5. Возвращаем успешный ответ
-    return res.status(200).json({
-      page: result.page + 1,
-      perPage: result.hitsPerPage,
-      totalItems: result.nbHits,
-      totalPages: result.nbPages,
-      products: result.hits ? result.hits.map(mapProductToDTO) : [],
-    });
-  } catch (error) {
-    // ВАЖНО: Текущая ошибка выведется в терминал твоего бэкенда! Посмотри туда, если снова упадет.
-    console.error('--- [ОШИБКА ALGOLIA] ---');
-    console.error(error);
-    console.error('------------------------');
-
-    return res.status(500).json({
-      message: 'Ошибка работы поискового движка',
-      details: error.message,
-    });
-  }
+  }, typesenseEnabled() ? () => typesenseCatalog(req.query) : null, async () => {
+    const products = await Sneacker.find({'sizes.quantity': {$gt: 0}})
+      .select('name category price image barcode sizes createdAt').maxTimeMS(10000).lean();
+    return mongoCatalog(products, req.query);
+  }));
 };
-//
-//
-//
 export const getSneackerById = async (req, res) => {
   const { id } = req.params;
   const sneacker = await Sneacker.findById(id);
@@ -97,9 +44,7 @@ export const getSneackerById = async (req, res) => {
 //
 //
 export const getCategories = async (req, res) => {
-  const categories = (await Sneacker.distinct('category')).filter(
-    (c) => !c.includes('🔥 Sale | від 899 грн  | останні розміри 🔥'),
-  );
+  const categories = (await Sneacker.distinct('category')).filter(Boolean);
   res.json(categories);
 };
 //

@@ -77,6 +77,8 @@ export const getSneackersSchema = {
       'number.max': 'perPage must be at most 50',
     }),
 
+    brand: Joi.string().trim().max(80),
+    model: Joi.string().trim().max(160),
     search: Joi.string().trim().allow('').messages({
       'string.base': 'search must be a string',
     }),

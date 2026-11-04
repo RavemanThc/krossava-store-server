@@ -22,13 +22,13 @@ export function cleanupEntry(product) {
 export async function cleanupAssets(entry, { isActive, listAssets, isReferenced, destroy, complete }) {
   if (await isActive(entry)) { await complete(entry._id); return 0; }
   const ids = new Set(entry.publicIds);
-  if (entry.article) for (const id of await listAssets(`krossava/telegram/${entry.article}/`)) ids.add(id);
+  if (entry.article) for (const id of await listAssets(`krossava/telegram/${entry.article}/`, entry.publicIds)) ids.add(id);
   let deleted = 0;
   for (const id of ids) {
-    if (!/^krossava\/telegram\/(?:[A-Z]|M[AB])\d{4}\/[a-f0-9]{64}$/.test(id)) throw new Error('Unexpected Cloudinary asset path.');
+    if (!/^(?:r2:)?krossava\/telegram\/(?:[A-Z]|M[AB])\d{4}\/[a-f0-9]{64}$/.test(id)) throw new Error('Unexpected gallery asset path.');
     if (await isReferenced(id)) continue;
     const result = await destroy(id);
-    if (!['ok', 'not found'].includes(result.result)) throw new Error('Cloudinary deletion failed.');
+    if (!['ok', 'not found'].includes(result.result)) throw new Error('Gallery deletion failed.');
     deleted++;
   }
   await complete(entry._id);
