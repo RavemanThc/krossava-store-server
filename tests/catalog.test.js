@@ -122,3 +122,10 @@ test('catalog remains available from MongoDB when Algolia rejects requests', asy
   assert.equal(res.body.products[0].id,id);
   assert.deepEqual(res.body.filters.sizes,[{value:'43',count:1}]);
 });
+
+test('size chart DTO exposes measurements without Telegram provenance',()=>{
+ const chart={rows:[{size:'42',cm:26.5}],sourceChatId:'private',sourceMessageId:'123'};
+ const dto=mapProductToDTO(new Sneacker({...product,sizeChart:chart}));
+ assert.deepEqual(dto.sizeChart,[{size:'42',cm:26.5}]);
+ assert.deepEqual(mapProductToDTO(product).sizeChart,[]);
+});

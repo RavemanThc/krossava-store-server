@@ -10,7 +10,7 @@ try {
   const settings=await algoliaClient.getSettings({indexName:INDEX_NAME});
   const names=['category','brand','model','sizes','inStock'];
   const previous=(settings.attributesForFaceting || []).filter(v=>!names.includes(v.replace(/(?:filterOnly|searchable|afterDistinct)\(/g,'').replace(/\)/g,'')));
-  const task=await algoliaClient.setSettings({indexName:INDEX_NAME,indexSettings:{attributesForFaceting:[...previous,...names]},forwardToReplicas:true});
+  const task=await algoliaClient.setSettings({indexName:INDEX_NAME,indexSettings:{attributesForFaceting:[...previous,...names],paginationLimitedTo:10000},forwardToReplicas:true});
   await algoliaClient.waitForTask({indexName:INDEX_NAME,taskID:task.taskID});
   const records=products.map(mapProductToAlgolia);
   await algoliaClient.saveObjects({indexName:INDEX_NAME,objects:records,waitForTasks:true});

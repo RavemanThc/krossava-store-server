@@ -28,6 +28,7 @@ export const mapProductToDTO = (product) => {
     ].filter(Boolean))],
     description: product.description,
     sizes: mappedSizes,
+    sizeChart: (product.sizeChart?.rows || []).map(row => ({ size: row.size, cm: row.cm })),
     updatedAt: product.lastSyncAt || product.updatedAt,
     barcode: product.barcode,
   };

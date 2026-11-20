@@ -23,6 +23,7 @@ try{
   }
   await run('scripts/importProducts.js',values.apply?['--apply']:[]);
   if(values.apply){
+    await run('scripts/syncSizeCharts.js',['--apply']);
     await mkdir('.telegram',{recursive:true,mode:0o700});
     directory=await mkdtemp('.telegram/daily-');
     await run('scripts/collectTelegramComments.js',['--missing-only','--output',directory]);

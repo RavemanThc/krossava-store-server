@@ -17,7 +17,8 @@
     "sync:daily": "node scripts/syncDaily.js",
     "configure:filters": "node scripts/configureCatalogFilters.js",
     "migrate:photos:r2": "node scripts/migratePhotosToR2.js",
-    "sync:typesense": "node scripts/syncTypesense.js"
+    "sync:typesense": "node scripts/syncTypesense.js",
+    "sync:size-charts": "node scripts/syncSizeCharts.js"
   },
   "keywords": [],
   "author": "",

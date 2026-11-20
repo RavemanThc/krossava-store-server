@@ -19,6 +19,13 @@ const productSchema = new Schema(
       sourceThreadId: String,
     }],
     lastSyncAt: Date,
+    sizeChart: {
+      rows: [{ _id: false, size: String, cm: Number }],
+      sourceChatId: String,
+      sourceMessageId: String,
+      sourceDate: Date,
+      syncedAt: Date,
+    },
     description: String,
     barcode: String,
     sizes: [
