@@ -46,3 +46,8 @@ test('indexed availability contains only purchasable sizes', () => {
   assert.deepEqual(mapProductToAlgolia(product).sizes,['42']);
   assert.equal(mapProductToAlgolia({...product,sizes:[]}).inStock,false);
 });
+
+test('recognizes Premiata and Air Jordan in seasonal categories',()=>{
+ assert.equal(classifyProduct({name:'Premiata Moerun Fur M Navy',category:'Зима'}).brand,'Premiata');
+ assert.deepEqual(classifyProduct({name:'Air Jordan 4 Retro Fur M Black Cat',category:'Зима'}),{brand:'Nike',model:'Air Jordan 4'});
+});

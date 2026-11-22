@@ -56,3 +56,17 @@ export const chat = async (req, res) => {
     ? 'Ось товари за вашим запитом. Відкрийте картку, щоб перевірити наявність розміру.'
     : 'Товарів не знайдено. Спробуйте ввести назву моделі, бренд або артикул.', products });
 };
+
+// Cursor pagination reads the entire catalogue independently of search service limits.
+export const getMerchantProducts = async (req, res) => {
+  const after = req.query.after;
+  if (after !== undefined && (typeof after !== 'string' || !/^[a-f0-9]{24}$/i.test(after))) {
+    throw createHttpError(400, 'Invalid cursor');
+  }
+  const products = await Sneacker.find(after ? { _id: { $gt: after } } : {})
+    .sort({ _id: 1 }).limit(500)
+    .select('_id groupId name category price image telegramPhotos description barcode sizes lastSyncAt updatedAt')
+    .maxTimeMS(15000).lean();
+  res.json({ products: products.map(mapProductToDTO),
+    nextCursor: products.length === 500 ? String(products.at(-1)._id) : null });
+};

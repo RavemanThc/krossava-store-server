@@ -1,3 +1,4 @@
+import { classifyProduct } from '../services/catalog/classification.js';
 export const mapProductToDTO = (product) => {
   const id = product._id ? product._id.toString() : product.objectID;
 
@@ -20,6 +21,7 @@ export const mapProductToDTO = (product) => {
     image: product.image || product.images?.[0],
     title: product.name || product.title, // На случай, если в Algolia поле называется title
     category: product.category,
+    brand: classifyProduct(product).brand,
     price: product.price,
     images: [...new Set([
       product.image,

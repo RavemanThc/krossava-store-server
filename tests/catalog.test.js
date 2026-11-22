@@ -4,7 +4,7 @@ import { Sneacker } from '../src/models/sneacker.js';
 import { mapProductToDTO } from '../src/mappers/productMapper.js';
 import { mapProductToAlgolia } from '../src/mappers/algoliaMapper.js';
 import { getSneackerById, getSneackers } from '../src/controllers/sneackerControllers.js';
-import { getHistory, getSitemapProducts, chat } from '../src/controllers/catalogExtras.js';
+import { getHistory, getSitemapProducts, getMerchantProducts, chat } from '../src/controllers/catalogExtras.js';
 import { requireAdmin } from '../src/middlewares/requireAdmin.js';
 import { algoliaClient } from '../src/config/algolia.js';
 import router from '../src/routers/sneackerRourters.js';
@@ -128,4 +128,18 @@ test('size chart DTO exposes measurements without Telegram provenance',()=>{
  const dto=mapProductToDTO(new Sneacker({...product,sizeChart:chart}));
  assert.deepEqual(dto.sizeChart,[{size:'42',cm:26.5}]);
  assert.deepEqual(mapProductToDTO(product).sizeChart,[]);
+});
+
+test('seasonal products expose an actual brand and never the season as brand',()=>{
+ assert.equal(mapProductToDTO({...product,name:'ASICS GEL-Kayano 20',category:'Термо'}).brand,'Asics');
+ assert.equal(mapProductToDTO({...product,name:'Unknown shoe',category:'Зима'}).brand,'');
+});
+test('merchant export uses database cursor and preserves variant stock',async t=>{
+ let filter;
+ t.mock.method(Sneacker,'find',q=>{filter=q;return {sort:()=>({limit:()=>({select:()=>({maxTimeMS:()=>({lean:async()=>[product]})})})})};});
+ const res=response();await getMerchantProducts({query:{after:id}},res);
+ assert.deepEqual(filter,{_id:{$gt:id}});
+ assert.deepEqual(res.body.products[0].sizes,product.sizes);
+ assert.equal(res.body.nextCursor,null);
+ await assert.rejects(getMerchantProducts({query:{after:'bad'}},res),{status:400});
 });

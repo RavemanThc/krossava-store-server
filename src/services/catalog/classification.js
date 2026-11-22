@@ -1,4 +1,4 @@
-const brands = ['Calvin Klein','Baas','The North Face','New Balance','Under Armour','On Running','DC Shoes','Timberland','Columbia','Salomon','Lacoste','Merrell','Reebok','Converse','Adidas','Asics','Armani','HOKA','Nike','Vans','UGG'];
+const brands = ['Premiata','Calvin Klein','Baas','The North Face','New Balance','Under Armour','On Running','DC Shoes','Timberland','Columbia','Salomon','Lacoste','Merrell','Reebok','Converse','Adidas','Asics','Armani','HOKA','Nike','Vans','UGG'];
 const normalize = value => String(value || '').normalize('NFKC').replace(/\s+/g,' ').trim();
 export function categoryBrand(category) {
   return brands.find(brand => brand.toLowerCase() === normalize(category).toLowerCase()) || '';
@@ -13,10 +13,11 @@ const families = {
 const variantWords = /\b(?:gtx|gore[ -]?tex|termo|thermo|thermal|fur|fleece|winter|big\s+size|all\s+(?:black|white)|black|white|grey|gray|beige|blue|navy|red|green|olive|khaki|brown|pink|purple|orange|yellow|silver|gold|cream|ivory|burgundy|mint|mauve|phantom|coyote|sand|army|dark|light|triple|off[ -]?white|reflective|milk|taupe|moss|mustard|pale|plum|lavender|neon|ocean|violet)\b/i;
 export function classifyProduct(product) {
   const name=normalize(product.name || product.title);
-  const brand=brands.find(b=>name.toLowerCase().startsWith(b.toLowerCase()+' ')) || (/^DC\s/i.test(name) ? 'DC Shoes' : categoryBrand(product.category));
+  const brand=brands.find(b=>name.toLowerCase().startsWith(b.toLowerCase()+' ')) || (/^DC\s/i.test(name) ? 'DC Shoes' : /^Air Jordan\s/i.test(name) ? 'Nike' : categoryBrand(product.category));
   if(!brand)return {brand:'',model:''};
   let rest=name.toLowerCase().startsWith(brand.toLowerCase()+' ') ? name.slice(brand.length).trim() : '';
   if (brand === 'DC Shoes' && /^DC\s/i.test(name)) rest = name.slice(3).trim();
+  if (brand === 'Nike' && /^Air Jordan\s/i.test(name)) rest = name;
   if (brand === 'Adidas') rest = rest.replace(/^Originals\s+/i, '').replace(/^Spezial\b/i, 'Handball Spezial');
   if (brand === 'Nike') rest = rest.replace(/^M\s+(?=Air Max)/i, '');
   if (brand === 'New Balance') rest = rest.replace(/^ML574\b/i, '574');

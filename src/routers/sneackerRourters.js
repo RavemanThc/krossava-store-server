@@ -1,5 +1,5 @@
 import { requireAdmin } from '../middlewares/requireAdmin.js';
-import { getHistory, getSitemapProducts, chat } from '../controllers/catalogExtras.js';
+import { getHistory, getSitemapProducts, getMerchantProducts, chat } from '../controllers/catalogExtras.js';
 import { Router } from 'express';
 import {
   getSneackers,
@@ -22,6 +22,7 @@ const router = Router();
 router.get('/sneackers', celebrate(getSneackersSchema), getSneackers);
 router.get('/sneackers/history', getHistory);
 router.get('/sitemap-products', getSitemapProducts);
+router.get('/merchant-products', getMerchantProducts);
 router.post('/chat', chat);
 router.get('/categories', getCategories);
 
