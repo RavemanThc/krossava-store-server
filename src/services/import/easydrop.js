@@ -31,8 +31,22 @@ export async function parseEasydrop(xml) {
 export function stockUpdateOperations(products, syncedAt = new Date()) {
   return products.map(product => ({ updateOne: {
     filter: { groupId: product.groupId },
-    // Never replace the document: gallery data belongs to a separate source.
-    update: { $set: { ...product, lastSyncAt: syncedAt }, $setOnInsert: { createdAt: syncedAt } },
+    // Evaluate against the current document, not a snapshot taken before generation.
+    // Retain copy while changed supplier facts wait for a fresh generation.
+    update: [{ $set: {
+      ...Object.fromEntries(Object.entries(product).map(([key, value]) => [key, { $literal: value }])),
+      supplierDescription: { $literal: product.description },
+      description: { $cond: [
+        { $and: [
+          { $eq: ['$name', { $literal: product.name }] },
+          { $eq: [{ $type: '$aiDescription.text' }, 'string'] },
+          { $ne: ['$aiDescription.text', ''] },
+        ] },
+        '$aiDescription.text', { $literal: product.description },
+      ] },
+      lastSyncAt: { $literal: syncedAt },
+      createdAt: { $ifNull: ['$createdAt', { $literal: syncedAt }] },
+    } }],
     upsert: true,
   } }));
 }

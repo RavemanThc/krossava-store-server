@@ -1,3 +1,6 @@
+import mongoose from 'mongoose';
+import { startDescriptionWorker } from './services/ai/descriptionQueue.js';
+import { syncSearchProducts } from './services/search/sync.js';
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
@@ -27,6 +30,7 @@ app.use(notFoundPageHandler);
 app.use(errors());
 app.use(errorHandler);
 await connectMongoDB();
+startDescriptionWorker(mongoose.connection.db, { syncSearch: syncSearchProducts });
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

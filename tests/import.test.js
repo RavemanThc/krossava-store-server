@@ -53,8 +53,8 @@ test('Easydrop updates stock without overwriting imported gallery',async()=>{
  const products=await parseEasydrop(feed(0));
  assert.equal(products[0].sizes[0].quantity,0);
  assert.equal(products[0].name,'Nike Test');
- const update=stockUpdateOperations(products)[0].updateOne.update.$set;
- assert.equal(update.price,1900); assert.equal(update.telegramPhotos,undefined); assert.equal(update.sizeChart,undefined);
+ const update=stockUpdateOperations(products)[0].updateOne.update[0].$set;
+ assert.deepEqual(update.price,{$literal:1900}); assert.equal(update.telegramPhotos,undefined); assert.equal(update.sizeChart,undefined);
  await assert.rejects(parseEasydrop(feed('invalid')));
  await assert.rejects(parseEasydrop('<shop/>'));
 });

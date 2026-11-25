@@ -25,7 +25,7 @@ try {
     await storage.check();
     const queue = mongoose.connection.collection('catalog_asset_cleanup');
     report.stage='update-products';
-    if(plan.active.length) await Sneacker.bulkWrite(stockUpdateOperations(plan.active));
+    if(plan.active.length) await Sneacker.collection.bulkWrite(stockUpdateOperations(plan.active));
     // Persist deletion intent before removing the product, so a crash never loses cleanup work.
     for(const product of plan.removed){
       const entry=cleanupEntry(product);

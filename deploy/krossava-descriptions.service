@@ -1,0 +1,17 @@
+[Unit]
+Description=KROSSAVA Serper and Gemini catalogue descriptions
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Documents/Codex_Krossava/krossava-server
+ExecStart=/usr/bin/node scripts/generateDescriptions.js --apply --watch --limit 10000
+Restart=always
+RestartSec=60
+TimeoutStopSec=90
+StandardOutput=append:%h/Documents/Codex_Krossava/krossava-server/sync-reports/descriptions-worker.log
+StandardError=append:%h/Documents/Codex_Krossava/krossava-server/sync-reports/descriptions-worker.log
+
+[Install]
+WantedBy=default.target

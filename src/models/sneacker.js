@@ -27,6 +27,8 @@ const productSchema = new Schema(
       syncedAt: Date,
     },
     description: String,
+    supplierDescription: String,
+    aiDescription: Schema.Types.Mixed,
     barcode: String,
     sizes: [
       {

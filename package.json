@@ -19,7 +19,8 @@
     "migrate:photos:r2": "node scripts/migratePhotosToR2.js",
     "sync:typesense": "node scripts/syncTypesense.js",
     "sync:size-charts": "node scripts/syncSizeCharts.js",
-    "test:gemini-description": "node scripts/testGeminiDescription.js"
+    "test:gemini-description": "node scripts/testGeminiDescription.js",
+    "generate:descriptions": "node scripts/generateDescriptions.js"
   },
   "keywords": [],
   "author": "",
