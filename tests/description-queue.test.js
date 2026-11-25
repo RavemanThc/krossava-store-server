@@ -5,7 +5,7 @@ import { descriptionStep as runStep } from '../src/services/ai/descriptionQueue.
 const descriptionStep = (db, options) => runStep(db, { research: async () => ({ cacheKey: 'test', approvedFacts: [] }), ...options });
 import { stockUpdateOperations } from '../src/services/import/easydrop.js';
 const product = { _id: 'p', groupId: 'g', name: 'ASICS Test Grey', description: '<p>Матеріал: текстиль</p>' };
-const text = `${product.name} — кросівки у сірому кольорі. За даними постачальника, верх виконаний із текстилю.\n\nСіру пару можна поєднати з темними джинсами або джогерами.`;
+const text = `${product.name} — кросівки у сірому кольорі. Верх виконаний із текстилю.\n\nСіру пару можна поєднати з темними джинсами або джогерами.`;
 const hash = sourceIdentity(product).hash;
 const generated = { ...product, supplierDescription: product.description, description: text,
   aiDescription: { text, sourceHash: hash } };
@@ -34,7 +34,7 @@ test('XML atomically preserves AI copy, stores new supplier facts and escapes do
 });
 test('copy requires exact name and rejects unsupported technology and authenticity claims', () => {
   assert.equal(validateCatalogCopy(text, product.name), true);
-  for (const claim of [' Оригінальні кросівки.', ' Мембрана GORE-TEX.', ' Натуральна шкіра.', ' Комфорт протягом дня.', ' https://example.com'])
+  for (const claim of [' За даними постачальника, верх із текстилю.', ' Оригінальні кросівки.', ' Мембрана GORE-TEX.', ' Натуральна шкіра.', ' Комфорт протягом дня.', ' https://example.com'])
     assert.equal(validateCatalogCopy(text + claim, product.name), false);
   assert.equal(validateCatalogCopy(text.slice(10), product.name), false);
 });
